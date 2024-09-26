@@ -6,6 +6,8 @@ import tensorflow as tf
 import mediapipe as mp
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input, Concatenate, Dropout
 from tensorflow.keras.applications import VGG16
+from streamlit_webrtc import webrtc_streamer
+import av
 
 # Carrega o classificador Haar Cascade pré-treinado para detecção de rostos
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -102,57 +104,43 @@ face_model.load_weights('merge/modelo_emocao_face_4classes.weights.h5')
 
 gesture_model = tf.keras.models.load_model('merge/modelo_landmarks_gesto_emocoes_libras.h5')  # Atualize o caminho conforme necessário
 
-# Função para capturar a câmera em tempo real usando Streamlit
+# Função para processar frames de vídeo com streamlit-webrtc
+def video_frame_callback(frame):
+    img = frame.to_ndarray(format="bgr24")
+
+    # Detectar emoção facial
+    face_region, face_landmarks = detect_face_and_landmarks(img)
+    face_prediction = np.zeros((1, num_classes))  # Previsão padrão
+
+    if face_region is not None and face_landmarks is not None and are_landmarks_valid(face_landmarks, img.shape):
+        face_region_rgb = cv2.cvtColor(face_region, cv2.COLOR_BGR2RGB)
+        face_region_resized = cv2.resize(face_region_rgb, (224, 224))
+        face_region_resized = np.expand_dims(face_region_resized.astype(np.float32) / 255.0, axis=0)
+        face_landmarks = np.expand_dims(face_landmarks, axis=0)
+
+        face_prediction = face_model.predict([face_region_resized, face_landmarks])
+
+    # Detectar gestos da mão
+    hand_landmarks = extract_hand_landmarks(img)
+    gesture_prediction = np.zeros((1, num_classes))  # Previsão padrão
+
+    if hand_landmarks is not None:
+        hand_landmarks = np.expand_dims(hand_landmarks, axis=0)
+        gesture_prediction = gesture_model.predict(hand_landmarks)
+
+    # Combinar predições e determinar a classe dominante
+    dominant_class, confidence = combine_predictions(face_prediction[0], gesture_prediction[0])
+
+    # Exibir o resultado
+    label = f"{['Feliz', 'Raiva', 'Surpreso', 'Triste'][dominant_class]}: {confidence:.2f}%"
+    st.text(label)
+
+    return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+# Função principal para iniciar o stream de vídeo
 def classify_realtime_streamlit():
     st.title("Detecção de Emoções e Gestos em Tempo Real")
-    run = st.checkbox('Iniciar Detecção')
-
-    frame_window = st.image([])
-    text_window = st.empty()
-
-    cap = cv2.VideoCapture(0)
-    class_names = ['Feliz', 'Raiva', 'Surpreso', 'Triste']
-
-    while run:
-        ret, frame = cap.read()
-        if not ret:
-            st.write("Falha ao capturar imagem da câmera.")
-            break
-
-        # Detectar emoção facial
-        face_region, face_landmarks = detect_face_and_landmarks(frame)
-        face_prediction = np.zeros((1, num_classes))  # Previsão padrão
-
-        if face_region is not None and face_landmarks is not None and are_landmarks_valid(face_landmarks, frame.shape):
-            face_region_rgb = cv2.cvtColor(face_region, cv2.COLOR_BGR2RGB)
-            face_region_resized = cv2.resize(face_region_rgb, (224, 224))
-            face_region_resized = np.expand_dims(face_region_resized.astype(np.float32) / 255.0, axis=0)
-            face_landmarks = np.expand_dims(face_landmarks, axis=0)
-
-            face_prediction = face_model.predict([face_region_resized, face_landmarks])
-
-        # Detectar gestos da mão
-        hand_landmarks = extract_hand_landmarks(frame)
-        gesture_prediction = np.zeros((1, num_classes))  # Previsão padrão
-
-        if hand_landmarks is not None:
-            hand_landmarks = np.expand_dims(hand_landmarks, axis=0)
-            gesture_prediction = gesture_model.predict(hand_landmarks)
-
-        # Combinar predições e determinar a classe dominante
-        dominant_class, confidence = combine_predictions(face_prediction[0], gesture_prediction[0])
-
-        # Exibir o resultado na tela
-        label = f"{class_names[dominant_class]}: {confidence:.2f}%"
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame_window.image(frame_rgb)
-        text_window.text(label)
-
-        # Adiciona um delay para simular uma taxa de frames mais baixa
-        cv2.waitKey(100)
-
-    cap.release()
-    cv2.destroyAllWindows()
+    webrtc_streamer(key="example", video_frame_callback=video_frame_callback)
 
 # Iniciar a aplicação Streamlit
 if __name__ == '__main__':
