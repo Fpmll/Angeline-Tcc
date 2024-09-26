@@ -11,7 +11,7 @@ from tensorflow.keras.applications import VGG16
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 # Carrega o preditor de landmarks faciais da dlib
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+predictor = dlib.shape_predictor("merge/shape_predictor_68_face_landmarks.dat")
 
 # Inicializar MediaPipe para detecção de mãos
 mp_hands = mp.solutions.hands
