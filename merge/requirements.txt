@@ -6,4 +6,3 @@ mediapipe
 dlib
 streamlit-webrtc
 protobuf==3.19.0
-pip install --upgrade pip
