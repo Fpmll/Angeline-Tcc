@@ -1,9 +1,8 @@
-streamlit
-opencv-python-headless
-numpy
-tensorflow==2.11.0
-mediapipe
-cmake
-dlib==19.22.1
-streamlit-webrtc
-protobuf==3.19.0
+cmake>=3.18.4
+dlib==19.24.0
+streamlit>=1.24.0
+opencv-python-headless==4.5.5.64
+tensorflow==2.17.0
+mediapipe==0.10.14
+numpy>=1.26.0
+Pillow==9.5.0
