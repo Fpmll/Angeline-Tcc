@@ -3,6 +3,7 @@ opencv-python-headless
 numpy
 tensorflow==2.11.0
 mediapipe
-dlib
+cmake
+dlib==19.22.1
 streamlit-webrtc
 protobuf==3.19.0
