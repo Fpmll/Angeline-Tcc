@@ -100,7 +100,7 @@ num_classes = 4  # 'Feliz', 'Raiva', 'Surpreso', 'Triste'
 face_model = create_face_model((224, 224, 3), (68 * 2,), num_classes)
 face_model.load_weights('modelo_emocao_face__V3_4classes.weights.h5')
 
-gesture_model = tf.keras.models.load_model('modelo_landmarks_gesto_emocoes_libras.h5')  # Atualize o caminho conforme necessário
+gesture_model = tf.keras.models.load_model('merge/modelo_landmarks_gesto_emocoes_libras.h5')  # Atualize o caminho conforme necessário
 
 # Função para capturar a câmera em tempo real usando Streamlit
 def classify_realtime_streamlit():
