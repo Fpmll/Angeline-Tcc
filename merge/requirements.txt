@@ -7,4 +7,5 @@ mediapipe==0.10.14
 numpy>=1.26.0
 Pillow==9.5.0
 streamlit-webrtc==0.35.0
+streamlit.report_thread
 
